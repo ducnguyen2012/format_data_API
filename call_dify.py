@@ -8,7 +8,7 @@ load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
 URL = os.getenv("URL")
-async def call_dify(user_message: str, conversation_id: str, ten_KH: str):
+async def call_dify(user_message: str, conversation_id: str, ten_KH: str, ma_qc: str):
     url = URL
 
     headers = {
@@ -17,7 +17,7 @@ async def call_dify(user_message: str, conversation_id: str, ten_KH: str):
     }
 
     data_raw = {
-        "inputs": {},
+        "inputs": {"ten_kh": ten_KH, "ma_qc": ma_qc},
         "query": user_message,
         "response_mode": "blocking",
         "conversation_id": conversation_id,
@@ -27,9 +27,10 @@ async def call_dify(user_message: str, conversation_id: str, ten_KH: str):
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url=url, headers=headers, json=data_raw,)
-            print(f"This is my response: {response}")
+            
             response.raise_for_status()  # Raise exception for HTTP 4xx/5xx
             response_dict = response.json()
+            print(f"This is my response: {response_dict}")
             conversation_id = response_dict.get("conversation_id", conversation_id)
             return response_dict, conversation_id
     except httpx.HTTPStatusError as exc:

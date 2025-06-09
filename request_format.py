@@ -7,5 +7,7 @@ class Request_format(BaseModel):
     store_id: str
     page_id: str
     conversation_id: str
+    ma_qc: str
+    ten_kh: str
     session_id: str
     message: list 
