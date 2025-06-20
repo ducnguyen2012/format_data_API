@@ -36,7 +36,7 @@ async def response(request: Request):
 
     '''
     token = request.headers.get('Bot-Api-Token')
-    token = "f16dbaef3aa33238b9697758fd816ce2"
+    
     if not token or token != f"{os.getenv('AI_API_KEY')}": 
         print(f"this is my token: {token}")
         return JSONResponse(content={"error": "Unauthorized"}, status_code=401)
