@@ -43,7 +43,6 @@ async def response(request: Request):
     '''
 
     token = request.headers.get('Bot-Api-Token')
-    token = "f16dbaef3aa33238b9697758fd816ce2"
 
     #! if token is invalid
     if not token or token != f"{os.getenv('AI_API_KEY')}": 
