@@ -1,3 +1,7 @@
+'''
+We can use request_format to test pydantic baseModel request in fastAPI, if we dont use we can use curl to test in postman
+'''
+
 # from pydantic import BaseModel
 # class Request_format(BaseModel):
 #     '''
