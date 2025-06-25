@@ -11,7 +11,7 @@ URL = os.getenv("DIFY_CHAT_URL")
 
 
 
-async def call_dify(user_message: str, conversation_id_and_session_id: list, ten_KH: str, ma_qc: list):
+async def call_dify(user_message: str, conversation_id: str, session_id: str, ten_KH: str, ma_qc: list,request_conversation_id: str):
     '''
     This function will call bot api and return its response in json
 
@@ -28,9 +28,7 @@ async def call_dify(user_message: str, conversation_id_and_session_id: list, ten
     '''
     url = URL
     print(f"this is my url: {url}")
-    conversation_id = conversation_id_and_session_id[0]
     
-    session_id = conversation_id_and_session_id[1]
 
     
     headers = {
@@ -39,7 +37,7 @@ async def call_dify(user_message: str, conversation_id_and_session_id: list, ten
     }
     print(f"this is my headers: {headers}")    
     data_raw = {
-        "inputs": {"ten_kh": ten_KH, "ma_qc": str(ma_qc),"session_id": session_id},
+        "inputs": {"ten_kh": ten_KH, "ma_qc": str(ma_qc),"session_id": session_id, "request_conversation_id": request_conversation_id},
         "query": user_message,
         "response_mode": "blocking",
         "conversation_id": conversation_id,

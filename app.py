@@ -17,11 +17,7 @@ redis_client = redis.Redis(host='localhost',port=6379,db=0,decode_responses=True
 
 #! ======================================================== get all keys from env =============================================================================
 app = FastAPI()
-DB_NAME=os.getenv("DB_NAME"),
-USER_NAME=os.getenv("USER_NAME"),
-HOST_IP=os.getenv("HOST_IP"),
-PASSWORD=os.getenv("PASSWORD"),
-PORT=os.getenv("PORT")
+
 #! ============================================================================================================================================================
 
 @app.post("/api/lead/chat/completions")
@@ -43,6 +39,7 @@ async def response(request: Request):
     '''
 
     token = request.headers.get('Bot-Api-Token')
+    token = "f16dbaef3aa33238b9697758fd816ce2"
 
     #! if token is invalid
     if not token or token != f"{os.getenv('AI_API_KEY')}": 
@@ -74,7 +71,10 @@ async def response(request: Request):
     #! ================================================== call dify ============================================================================
     updated_dify_conversation_id, updated_dify_session_id,bot_response = "","",""
     try:
-        bot_response, updated_dify_conversation_id, updated_dify_session_id = await call_dify(request_content, dify_conversation_id_and_session_id, ten_KH, ma_qc)
+        conversation_id = dify_conversation_id_and_session_id[0]
+        session_id = dify_conversation_id_and_session_id[1]
+        
+        bot_response, updated_dify_conversation_id, updated_dify_session_id = await call_dify(request_content, conversation_id, session_id, ten_KH, ma_qc,json_request.get("conversation_id"))
     except httpx.HTTPStatusError as exc:
         response = {"answer": f"HTTP Status Error: {exc.response.status_code} - {exc.response.text}"}
         print(response)
@@ -99,12 +99,12 @@ async def response(request: Request):
     except httpx.HTTPError as http_err:
         response = {"answer": f"Generic HTTP Error: {http_err}. Reset conversation_id, session_id and call_dify again"}
         dify_conversation_id_and_session_id = ["",""]
-        bot_response, updated_dify_conversation_id, updated_dify_session_id = await call_dify(request_content, dify_conversation_id_and_session_id, ten_KH, ma_qc)
+        bot_response, updated_dify_conversation_id, updated_dify_session_id = await call_dify(request_content, conversation_id, session_id, ten_KH, ma_qc,json_request.get("conversation_id"))
         print(response)
     except Exception as e:
         response = {"answer": f"Unexpected Error: {e}"}
         dify_conversation_id_and_session_id = ["",""]
-        bot_response, updated_dify_conversation_id, updated_dify_session_id = await call_dify(request_content, dify_conversation_id_and_session_id, ten_KH, ma_qc)
+        bot_response, updated_dify_conversation_id, updated_dify_session_id = await call_dify(request_content, conversation_id, session_id, ten_KH, ma_qc,json_request.get("conversation_id"))
         print(response)
     
         

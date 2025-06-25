@@ -56,8 +56,8 @@ def push_log_and_lead_information_to_DB(socialRequest: json, json_data_add_conve
     #! ==================== extract data from botMessage ======================
     bot_task_id = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["task_id"]
     bot_metadata_latency = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"]["usage"]["latency"]
-    bot_metadata_retriever_resources_document_name = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"].get("retriever_resources")
-    bot_metadata_retriever_resources_score = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"].get("retriever_resources")
+    # bot_metadata_retriever_resources_document_name = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"].get("retriever_resources")
+    # bot_metadata_retriever_resources_score = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"].get("retriever_resources")
     bot_metadata_retriever_resources_content = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["answer"]
     bot_conversation_id = json_data_add_conversationID_and_sessionID_to_bot.get("conversation_id")
     bot_session_id = json_data_add_conversationID_and_sessionID_to_bot.get("session_id")
@@ -65,115 +65,107 @@ def push_log_and_lead_information_to_DB(socialRequest: json, json_data_add_conve
 
     #! becasue social gonna past a list of message, so i need to use for to get all message, each with a line in database. 
     #! note: socialRequest is a list!
-    for i in range(len(socialRequest["message"])):
-        msg = socialRequest["message"][i]
-        message_id = msg.get("id")
-        message_role = msg.get("role")
-        message_content = msg.get("content")
-        message_type = msg.get("message_type")
-        message_channel_sender_id = msg.get("channel_sender_id")
-        message_is_send_by_page = msg.get("is_send_by_page")
-        message_channel_created_on = msg.get("channel_created_on")
-        message_post_id = msg.get("post_id")
-        message_post_type = msg.get("post_type")
-        message_post_image_urls = msg.get("post_image_urls")
-        
-        '''
-        Because bot always responses to the first message appear in social request
-        '''
-        if i == 0:
-            bot_task_id = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["task_id"]
-            bot_metadata_latency = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"]["usage"]["latency"]
-            # bot_metadata_retriever_resources_document_name = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"].get("retriever_resources")
-            # bot_metadata_retriever_resources_score = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"].get("retriever_resources")
-            bot_metadata_retriever_resources_content = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["answer"]
-            bot_conversation_id = json_data_add_conversationID_and_sessionID_to_bot.get("conversation_id")
-            bot_session_id = json_data_add_conversationID_and_sessionID_to_bot.get("session_id")
-        else:
-            bot_task_id = None
-            bot_metadata_latency = None
-            # bot_metadata_retriever_resources_document_name = None
-            # bot_metadata_retriever_resources_score = None
-            bot_metadata_retriever_resources_content = None
-            bot_conversation_id = None
-            bot_session_id = None
+    request_input = socialRequest
+    msg = socialRequest["message"][0]
+    message_id = msg.get("id")
+    message_role = msg.get("role")
+    message_content = msg.get("content")
+    message_type = msg.get("message_type")
+    message_channel_sender_id = msg.get("channel_sender_id")
+    message_is_send_by_page = msg.get("is_send_by_page")
+    message_channel_created_on = msg.get("channel_created_on")
+    message_post_id = msg.get("post_id")
+    message_post_type = msg.get("post_type")
+    message_post_image_urls = msg.get("post_image_urls")
+    
+    '''
+    Because bot always responses to the first message appear in social request
+    '''
+    
+    bot_task_id = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["task_id"]
+    bot_metadata_latency = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"]["usage"]["latency"]
+    bot_metadata_retriever_resources_content = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["answer"]
+    bot_conversation_id = json_data_add_conversationID_and_sessionID_to_bot.get("conversation_id")
+    bot_session_id = json_data_add_conversationID_and_sessionID_to_bot.get("session_id")
+    
 
+    #! ====================== extract statusCode from response =======================
+    statusCode = responseStatus["statusCode"]
+    '''
+    We only use these column when we can access to 3 columns 
 
-        #! ====================== extract statusCode from response =======================
-        statusCode = responseStatus["statusCode"]
-        '''
-        We only use these column when we can access to 3 columns 
-
+    bot_metadata_retriever_resources_content,
+    bot_metadata_retriever_resources_document_name,
+    bot_metadata_retriever_resources_score,
+    '''
+    #! ==================== push data into database =========================== 
+    insertData = """
+    INSERT INTO leadChatbotDatabase (
+        status_code,
+        message_is_send_by_page,
+        conversation_id,
+        session_id,
+        ads_ids,
+        conversation_name,
+        message_channel_sender_id,
+        message_channel_created_on,
+        message_id,
+        message_role,
+        message_content,
         bot_metadata_retriever_resources_content,
-        bot_metadata_retriever_resources_document_name,
-        bot_metadata_retriever_resources_score,
-        '''
-        #! ==================== push data into database =========================== 
-        insertData = """
-        INSERT INTO leadChatbotDatabase (
-            status_code,
-            message_is_send_by_page,
-            conversation_id,
-            session_id,
-            ads_ids,
-            conversation_name,
-            message_channel_sender_id,
-            message_channel_created_on,
-            message_id,
-            message_role,
-            message_content,
-            bot_metadata_retriever_resources_content,
-            message_type,
-            alias,
-            store_id,
-            page_id,
-            post_id,
-            post_type,
-            post_image_urls,
-            bot_task_id,
-            bot_metadata_latency,
-            bot_conversation_id,
-            bot_session_id
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
+        message_type,
+        alias,
+        store_id,
+        page_id,
+        post_id,
+        post_type,
+        post_image_urls,
+        bot_task_id,
+        bot_metadata_latency,
+        bot_conversation_id,
+        bot_session_id,
+        request_input
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
 
-        
-        
-        values = (
-            statusCode,
-            message_is_send_by_page,
-            conversation_id,
-            session_id,
-            ads_ids,
-            conversation_name,
-            message_channel_sender_id,
-            message_channel_created_on,
-            message_id,
-            message_role,
-            message_content,
-            bot_metadata_retriever_resources_content,
-            message_type,
-            alias,
-            store_id,
-            page_id,
-            message_post_id,
-            message_post_type,
-            message_post_image_urls,
-            bot_task_id,
-            bot_metadata_latency,
-            bot_conversation_id,
-            bot_session_id
-        )
-        try:
-            myCursor.execute(insertData, values)
-            conn.commit()  #! make change to the database persistent
-            print(f"execute to database done!")
-        except Exception as e:
-            '''
-            If there is an error we also close our connection!
-            '''
-            print(f"AN error is occur when insert into DB: {e}")
-            myCursor.close()
-            conn.close()    
+    
+    
+    values = (
+        statusCode,
+        message_is_send_by_page,
+        conversation_id,
+        session_id,
+        ads_ids,
+        conversation_name,
+        message_channel_sender_id,
+        message_channel_created_on,
+        message_id,
+        message_role,
+        message_content,
+        bot_metadata_retriever_resources_content,
+        message_type,
+        alias,
+        store_id,
+        page_id,
+        message_post_id,
+        message_post_type,
+        message_post_image_urls,
+        bot_task_id,
+        bot_metadata_latency,
+        bot_conversation_id,
+        bot_session_id,
+        request_input
+    )
+    try:
+        myCursor.execute(insertData, values)
+        conn.commit()  #! make change to the database persistent
+        print(f"execute to database done!")
+    except Exception as e:
+        '''
+        If there is an error we also close our connection!
+        '''
+        print(f"AN error is occur when insert into DB: {e}")
+        myCursor.close()
+        conn.close()    
     myCursor.close()
     conn.close()
