@@ -29,7 +29,7 @@ async def response(request: Request):
 
     '''
     Idea for save map variable request_conversation_id : dify conversation_id:
-    1. redis_client.get(request_conversation_id) or "": get value assign by request.conversation_id 
+    1. redis_client.get([json_request.get("conversation_id"),json_request.get("session_id")]) or "": get value assign by a list of request.conversation_id and request.session_id
     and assigned it to dify_conversation_id. If it is first time, it will be ""
     2. update_dify_conversation_id with call_dify. 
     3. if (updated_dify_conversation_id and not dify_conversation_id): if update_dify_conversation_id not None and dify_conversation_id is None:
@@ -37,13 +37,11 @@ async def response(request: Request):
         3.2. assign dify_conversation_id = updated_dify_conversation_id
 
     '''
-
     token = request.headers.get('Bot-Api-Token')
-    token = "f16dbaef3aa33238b9697758fd816ce2"
+    
 
     #! if token is invalid
     if not token or token != f"{os.getenv('AI_API_KEY')}": 
-        print(f"this is my token: {token}")
         return JSONResponse(content={"error": "Unauthorized"}, status_code=401)
     
     #! convert request to json
@@ -73,8 +71,8 @@ async def response(request: Request):
     try:
         conversation_id = dify_conversation_id_and_session_id[0]
         session_id = dify_conversation_id_and_session_id[1]
-        
         bot_response, updated_dify_conversation_id, updated_dify_session_id = await call_dify(request_content, conversation_id, session_id, ten_KH, ma_qc,json_request.get("conversation_id"))
+
     except httpx.HTTPStatusError as exc:
         response = {"answer": f"HTTP Status Error: {exc.response.status_code} - {exc.response.text}"}
         print(response)
@@ -109,66 +107,44 @@ async def response(request: Request):
     
         
         
-    '''
-    Handle the case update 
-    '''
-    if (updated_dify_conversation_id and not dify_conversation_id_and_session_id[0]):
+    # handle case update
+    if (updated_dify_conversation_id and not conversation_id):
+        '''
+        If there is an error, it will reset both conversation_id and session_id
+        '''
         new_session_info = [updated_dify_conversation_id, updated_dify_session_id]
         redis_client.set(request_conversation_id_and_session_id, json.dumps(new_session_info))
         dify_conversation_id_and_session_id = new_session_info
-    '''
-    If there are some bugs while calling api, it gonna reset conversation id and call dify again
-    '''
+    
+    #If there are some bugs while calling api, it gonna reset conversation id and call dify again
+    
     
 
     #! ============================================== push all information to database ============================================
-    json_data_add_conversationID_and_sessionID_to_bot = {
-        "botResponse": bot_response,
-        "conversation_id": updated_dify_conversation_id,
-        "session_id": updated_dify_session_id
-    }
-    final_response = format_response(bot_response)
+    final_response = format_response(bot_response, updated_dify_conversation_id, updated_dify_session_id)
 
-    responseStatus = {
-        'statusCode': 200
-    }
-    push_log_and_lead_information_to_DB(socialRequest=json_request,json_data_add_conversationID_and_sessionID_to_bot=json_data_add_conversationID_and_sessionID_to_bot, responseStatus=responseStatus)
+    push_log_and_lead_information_to_DB(socialRequest=json_request,final_response = final_response)
     return JSONResponse(content = final_response, status_code=200)
 
-def format_response(bot_response):
-    '''
-    format to response
-    response = {"state": str, "code": int, "message": str, "product": list, "faq_photos": list, "tags": list, "role": }
-    {
-   "code":200,
-   "role":"bot",
-   "tags":[],
-   "state":"done",
-   "message":[
-      {
-         "content":"Chào Bạn! Shop có ba loại hoa đang còn hàng để Bạn lựa chọn:\n\n1. Hoa len - Giá: 100.000 VNĐ\n",
-         "products":[
-            {
-               "product_id":"41144568",
-               "product_name":"Hoa len",
-               "send_product":false,
-               "product_photos":[
-                  "https://bizweb.dktcdn.net/100/553/514/products/images.jpg?v=1740386609000"
-               ]
-            }
-         ]
-      }
-   ],
-   "faq_photos":[]
-}
-    '''
-    
+def format_response(bot_response, updated_dify_conversation_id, updated_dify_session_id):
+    #! setup for parameter: 
+    code = 200
+    tags = [] #! we will handle case push tag in api tag in dify
+    state = "done"
     #! if bot response contains "chuyển cho nhân viên" -> role is staff
     role = "bot"
     if ("chuyển cho nhân viên" in bot_response["answer"]):
         role = "staff"
-    response = {"code": 200,"role": role,"state": "done", "messages": [{"content": bot_response["answer"], "products": []}], "faq_photos": [], "tags": []}
-    return response
+    bot_response["dify_conversation_id"] = updated_dify_conversation_id
+    bot_response["dify_session_id"] = updated_dify_session_id
+    bot_response["role"] = role
+    bot_response["code"] = code
+    bot_response["tags"] = tags
+    bot_response["state"] = state
+    bot_response["message"] = {"content": bot_response["answer"], "products": []}
+    bot_response["faq_photos"] = []
+
+    return bot_response
 
 
 #! =============================================================== log error =========================================================

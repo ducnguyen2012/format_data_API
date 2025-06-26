@@ -35,7 +35,7 @@ async def call_dify(user_message: str, conversation_id: str, session_id: str, te
         'Authorization': f'Bearer {API_KEY}',
         "Content-Type": "application/json"
     }
-    print(f"this is my headers: {headers}")    
+     
     data_raw = {
         "inputs": {"ten_kh": ten_KH, "ma_qc": str(ma_qc),"session_id": session_id, "request_conversation_id": request_conversation_id},
         "query": user_message,

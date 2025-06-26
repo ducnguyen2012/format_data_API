@@ -16,7 +16,7 @@ PORT=os.getenv("PORT")
 #! ==============================================================================================================================
 
 
-def push_log_and_lead_information_to_DB(socialRequest: json, json_data_add_conversationID_and_sessionID_to_bot: json, responseStatus: json):
+def push_log_and_lead_information_to_DB(socialRequest: dict, final_response: dict):
     '''
     This function will save all information from API, social information, dify information
 
@@ -28,7 +28,7 @@ def push_log_and_lead_information_to_DB(socialRequest: json, json_data_add_conve
         push all data to postgresSQL
     '''
     #! ============================= setup login database ===============================
-    print(f"This is my database: {DB_NAME} and user: {USER_NAME} and host_IP: {HOST_IP} and password: {PASSWORD} and port: {PORT}")
+    #print(f"This is my database: {DB_NAME} and user: {USER_NAME} and host_IP: {HOST_IP} and password: {PASSWORD} and port: {PORT}")
     conn = psycopg2.connect(
         database=DB_NAME,
         user=USER_NAME,
@@ -48,24 +48,18 @@ def push_log_and_lead_information_to_DB(socialRequest: json, json_data_add_conve
     session_id = socialRequest["session_id"]
     ads_ids = socialRequest["ads_ids"]
     conversation_name = socialRequest["conversation_name"]
-    statusCode = responseStatus["statusCode"]
+    status_code = final_response["code"]
 
 
         
         
     #! ==================== extract data from botMessage ======================
-    bot_task_id = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["task_id"]
-    bot_metadata_latency = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"]["usage"]["latency"]
-    # bot_metadata_retriever_resources_document_name = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"].get("retriever_resources")
-    # bot_metadata_retriever_resources_score = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"].get("retriever_resources")
-    bot_metadata_retriever_resources_content = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["answer"]
-    bot_conversation_id = json_data_add_conversationID_and_sessionID_to_bot.get("conversation_id")
-    bot_session_id = json_data_add_conversationID_and_sessionID_to_bot.get("session_id")
+    
 
 
     #! becasue social gonna past a list of message, so i need to use for to get all message, each with a line in database. 
     #! note: socialRequest is a list!
-    request_input = socialRequest
+    request_input = json.dumps(socialRequest, ensure_ascii=False)
     msg = socialRequest["message"][0]
     message_id = msg.get("id")
     message_role = msg.get("role")
@@ -82,15 +76,17 @@ def push_log_and_lead_information_to_DB(socialRequest: json, json_data_add_conve
     Because bot always responses to the first message appear in social request
     '''
     
-    bot_task_id = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["task_id"]
-    bot_metadata_latency = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["metadata"]["usage"]["latency"]
-    bot_metadata_retriever_resources_content = json_data_add_conversationID_and_sessionID_to_bot["botResponse"]["answer"]
-    bot_conversation_id = json_data_add_conversationID_and_sessionID_to_bot.get("conversation_id")
-    bot_session_id = json_data_add_conversationID_and_sessionID_to_bot.get("session_id")
+    bot_task_id = final_response.get("task_id")
+    bot_message_id = final_response.get("message_id")
+    bot_role = final_response.get("role")
+    bot_status_code = final_response.get("code")
+    bot_metadata_latency = final_response["metadata"]["usage"]["latency"]
+    bot_metadata_retriever_resources_content = final_response.get("answer")
+    bot_conversation_id = final_response.get("conversation_id")
+    bot_session_id = final_response.get("session_id")
     
-
-    #! ====================== extract statusCode from response =======================
-    statusCode = responseStatus["statusCode"]
+    
+    #! ====================== extract status_code from response =======================
     '''
     We only use these column when we can access to 3 columns 
 
@@ -117,21 +113,50 @@ def push_log_and_lead_information_to_DB(socialRequest: json, json_data_add_conve
         alias,
         store_id,
         page_id,
-        post_id,
-        post_type,
-        post_image_urls,
+        message_post_id,
+        message_post_type,
+        message_post_image_urls,
         bot_task_id,
         bot_metadata_latency,
         bot_conversation_id,
         bot_session_id,
-        request_input
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        request_input,
+        bot_message_id,
+        bot_role,
+        bot_status_code
+    ) VALUES (%s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s)
     """
 
     
     
     values = (
-        statusCode,
+        status_code,
         message_is_send_by_page,
         conversation_id,
         session_id,
@@ -154,7 +179,10 @@ def push_log_and_lead_information_to_DB(socialRequest: json, json_data_add_conve
         bot_metadata_latency,
         bot_conversation_id,
         bot_session_id,
-        request_input
+        request_input,
+        bot_message_id,
+        bot_role,
+        bot_status_code
     )
     try:
         myCursor.execute(insertData, values)
