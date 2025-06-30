@@ -6,7 +6,7 @@ from call_dify import call_dify
 from DifyAPI.get_content_ten_maqc import get_content_ten_maqc
 import os
 import redis
-from push_lead_DB import push_log_and_lead_information_to_DB
+
 
 #! ======================================================== call redis client in env ==========================================================================
 #redis_client = redis.Redis(host=os.getenv("REDIS_HOST"),port=os.getenv("REDIS_PORT"),db=os.getenv("REDIS_DB"),decode_responses=True)
