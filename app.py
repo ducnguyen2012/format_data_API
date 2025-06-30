@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import httpx
 from call_dify import call_dify
-from getContent_and_tenKH_maqc import getContent_and_tenKH_maqc
+from DifyAPI.get_content_ten_maqc import get_content_ten_maqc
 import os
 import redis
 from push_lead_DB import push_log_and_lead_information_to_DB
@@ -48,7 +48,7 @@ async def response(request: Request):
     json_request = await request.json()
     
     #! get content, tenKH, maqc in request
-    request_content,ten_KH,ma_qc = getContent_and_tenKH_maqc(json_request)
+    request_content,ten_KH,ma_qc = get_content_ten_maqc(json_request)
     
     #! let the conversation_id and session_id as key for retrieve 
     request_conversation_id_and_session_id = json.dumps([json_request.get("conversation_id"),json_request.get("session_id")])
