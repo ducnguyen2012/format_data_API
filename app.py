@@ -3,10 +3,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import httpx
 from call_dify import call_dify
-from DifyAPI.get_content_ten_maqc import get_content_ten_maqc
+from get_content_name_commercial_code import get_content_name_commercial_code
 import os
 import redis
-
 
 #! ======================================================== call redis client in env ==========================================================================
 #redis_client = redis.Redis(host=os.getenv("REDIS_HOST"),port=os.getenv("REDIS_PORT"),db=os.getenv("REDIS_DB"),decode_responses=True)
@@ -48,7 +47,7 @@ async def response(request: Request):
     json_request = await request.json()
     
     #! get content, tenKH, maqc in request
-    request_content,ten_KH,ma_qc = get_content_ten_maqc(json_request)
+    request_content,ten_KH,ma_qc = get_content_name_commercial_code(json_request)
     
     #! let the conversation_id and session_id as key for retrieve 
     request_conversation_id_and_session_id = json.dumps([json_request.get("conversation_id"),json_request.get("session_id")])
@@ -123,6 +122,7 @@ async def response(request: Request):
     #! ============================================== push all information to database ============================================
     final_response = format_response(bot_response, updated_dify_conversation_id, updated_dify_session_id)
 
+    
     return JSONResponse(content = final_response, status_code=200)
 
 def format_response(bot_response, updated_dify_conversation_id, updated_dify_session_id):
