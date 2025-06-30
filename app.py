@@ -123,7 +123,6 @@ async def response(request: Request):
     #! ============================================== push all information to database ============================================
     final_response = format_response(bot_response, updated_dify_conversation_id, updated_dify_session_id)
 
-    push_log_and_lead_information_to_DB(socialRequest=json_request,final_response = final_response)
     return JSONResponse(content = final_response, status_code=200)
 
 def format_response(bot_response, updated_dify_conversation_id, updated_dify_session_id):
