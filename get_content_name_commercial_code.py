@@ -6,21 +6,23 @@ def get_content_name_commercial_code(json_data):
     output: content: str, ten_KH: str, ma_qc: str
     '''
 
-    idx = 0
-    
+    n = len(json_data)
     '''
     This while will let pointer get into buyer message (and content of message is not empty) to return 
     '''
-    while json_data["message"][idx]["role"] != "buyer":
-        '''
-        This condition will ensure take last message from buyer
-        '''    
-        idx += 1
-    while json_data["message"][idx]["role"] == "buyer" and json_data["message"][idx]["content"] == "":
-        idx += 1
+    idx = 0
+    content = ""
+    ten_KH = ""
+    ma_qc = ""
+    for i in range(n):
+        idx = i
+        if (json_data["message"][idx]["role"] != "buyer" or (json_data["message"][idx]["role"] == "buyer" and json_data["message"][idx]["content"] == "")):
+            continue 
+        else:
+            content = json_data["message"][idx]["content"]
+            ten_KH = json_data["conversation_name"]
+            ma_qc = json_data["ads_ids"]
+            return content, ten_KH, ma_qc
     
-
-    content = json_data["message"][idx]["content"]
-    ten_KH = json_data["conversation_name"]
-    ma_qc = json_data["ads_ids"]
-    return content, ten_KH, ma_qc
+        
+    

@@ -66,12 +66,12 @@ async def response(request: Request):
 
 
     #! ================================================== call dify ============================================================================
-    updated_dify_conversation_id, updated_dify_session_id,bot_response = "","",""
+    updated_dify_conversation_id, updated_dify_session_id,bot_response = "","",{"event": "", "task_id": "", "id": "", "message_id": "", "conversation_id": "", "mode": "", "answer": ""}
     try:
         conversation_id = dify_conversation_id_and_session_id[0]
         session_id = dify_conversation_id_and_session_id[1]
         bot_response, updated_dify_conversation_id, updated_dify_session_id = await call_dify(request_content, conversation_id, session_id, ten_KH, ma_qc,json_request.get("conversation_id"))
-
+        print(f"This is my bot_response: {bot_response}")
     except httpx.HTTPStatusError as exc:
         response = {"answer": f"HTTP Status Error: {exc.response.status_code} - {exc.response.text}"}
         print(response)
@@ -140,7 +140,7 @@ def format_response(bot_response, updated_dify_conversation_id, updated_dify_ses
     bot_response["code"] = code
     bot_response["tags"] = tags
     bot_response["state"] = state
-    bot_response["message"] = {"content": bot_response["answer"], "products": []}
+    bot_response["messages"] = [{"content": bot_response["answer"], "products": []}]
     bot_response["faq_photos"] = []
 
     return bot_response
